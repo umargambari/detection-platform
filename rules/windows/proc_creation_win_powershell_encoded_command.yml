@@ -1,0 +1,29 @@
+title: Suspicious PowerShell Encoded Command
+id: 3f2b8c1e-5d7a-4e9b-9a61-2c8f4d0b7e15
+status: experimental
+description: >
+  Detects PowerShell started with an encoded command argument, a common way
+  to hide the real payload from simple log review.
+references:
+  - https://attack.mitre.org/techniques/T1059/001/
+author: Umar Gambari
+date: 2026-11-21
+tags:
+  - attack.execution
+  - attack.t1059.001
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_image:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+  selection_cli:
+    CommandLine|contains:
+      - ' -enc '
+      - ' -encodedcommand '
+  condition: selection_image and selection_cli
+falsepositives:
+  - Legitimate admin scripts or deployment tools that pass encoded commands
+level: medium
