@@ -7,7 +7,11 @@ name = "detectctl"
 version = "0.1.0"
 description = "Lint, test and ship Sigma detection rules"
 requires-python = ">=3.11"
-dependencies = ["pyyaml>=6"]
+dependencies = [
+    "pyyaml>=6",
+    "pysigma==1.5.1",
+    "pysigma-backend-kusto==1.0.1",
+]
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
