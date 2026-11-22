@@ -24,6 +24,4 @@ detection:
       - ' -enc '
       - ' -encodedcommand '
   condition: selection_image and selection_cli
-falsepositives:
-  - Legitimate admin scripts or deployment tools that pass encoded commands
 level: medium
