@@ -6,6 +6,7 @@ import argparse
 from pathlib import Path
 
 from . import __version__
+from .convert import TARGETS, convert_paths
 from .lint import lint_paths
 from .ruletest import run_rule_tests
 
@@ -27,6 +28,13 @@ def build_parser() -> argparse.ArgumentParser:
                       help="rules directory (default: rules)")
     test.add_argument("--fixtures", default="tests/fixtures", type=Path,
                       help="fixtures directory (default: tests/fixtures)")
+    convert = sub.add_parser("convert", help="convert rules to KQL for Microsoft Sentinel")
+    convert.add_argument("path", nargs="?", default="rules", type=Path,
+                         help="rules directory (default: rules)")
+    convert.add_argument("--target", choices=sorted(TARGETS), default="azuremonitor",
+                         help="query dialect (default: azuremonitor)")
+    convert.add_argument("--out", type=Path,
+                         help="write one .kql file per rule into this directory (default: print)")
     return parser
 
 
@@ -64,10 +72,37 @@ def _cmd_test(args: argparse.Namespace) -> int:
     return 1 if failed else 0
 
 
+def _cmd_convert(args: argparse.Namespace) -> int:
+    if not args.path.is_dir():
+        print(f"error: {args.path} is not a directory")
+        return 2
+    results = convert_paths(args.path, args.target)
+    if not results:
+        print(f"error: no rules found in {args.path}")
+        return 2
+    if args.out:
+        args.out.mkdir(parents=True, exist_ok=True)
+    failed = 0
+    for result in results:
+        if result.error:
+            print(f"FAIL  {result.rule.stem}  - {result.error}")
+            failed += 1
+        elif args.out:
+            dest = args.out / f"{result.rule.stem}.kql"
+            dest.write_text(result.query + "\n", encoding="utf-8")
+            print(f"OK    {result.rule.stem} -> {dest}")
+        else:
+            print(f"// {result.rule.stem}\n{result.query}\n")
+    print(f"{len(results)} rule(s) converted for {args.target}, {failed} failed")
+    return 1 if failed else 0
+
+
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.command == "lint":
         return _cmd_lint(args)
     if args.command == "test":
         return _cmd_test(args)
+    if args.command == "convert":
+        return _cmd_convert(args)
     return 2

@@ -30,3 +30,6 @@ jobs:
 
       - name: Unit tests
         run: pytest -q
+
+      - name: Convert rules to KQL
+        run: detectctl convert rules --target azuremonitor --out build/kql
