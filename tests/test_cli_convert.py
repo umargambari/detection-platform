@@ -3,13 +3,14 @@ from pathlib import Path
 from detectctl.cli import main
 
 RULES = str(Path(__file__).resolve().parent.parent / "rules")
+RULE_COUNT = len(list(Path(RULES).rglob("*.yml")))
 
 
 def test_convert_prints_kql(capsys):
     assert main(["convert", RULES]) == 0
     out = capsys.readouterr().out
     assert "SecurityEvent" in out
-    assert "1 rule(s) converted for azuremonitor, 0 failed" in out
+    assert f"{RULE_COUNT} rule(s) converted for azuremonitor, 0 failed" in out
 
 
 def test_convert_target_xdr(capsys):
@@ -21,8 +22,8 @@ def test_convert_writes_kql_files(tmp_path, capsys):
     out_dir = tmp_path / "kql"
     assert main(["convert", RULES, "--out", str(out_dir)]) == 0
     files = list(out_dir.glob("*.kql"))
-    assert len(files) == 1
-    assert files[0].read_text().startswith("SecurityEvent")
+    assert len(files) == RULE_COUNT
+    assert all(f.read_text().startswith("SecurityEvent") for f in files)
 
 
 def test_convert_missing_directory(capsys):
