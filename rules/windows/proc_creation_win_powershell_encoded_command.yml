@@ -8,6 +8,7 @@ references:
   - https://attack.mitre.org/techniques/T1059/001/
 author: Umar Gambari
 date: 2026-11-21
+modified: 2026-11-22
 tags:
   - attack.execution
   - attack.t1059.001
@@ -21,7 +22,20 @@ detection:
       - '\pwsh.exe'
   selection_cli:
     CommandLine|contains:
+      - ' -e '
+      - ' -ec '
+      - ' -en '
       - ' -enc '
+      - ' -enco '
+      - ' -encod '
+      - ' -encode '
+      - ' -encoded '
+      - ' -encodedc '
+      - ' -encodedco '
+      - ' -encodedcom '
+      - ' -encodedcomm '
+      - ' -encodedcomma '
+      - ' -encodedcomman '
       - ' -encodedcommand '
   condition: selection_image and selection_cli
 falsepositives:
