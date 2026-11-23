@@ -1,0 +1,4 @@
+{
+  "Image": "C:\\Windows\\System32\\schtasks.exe",
+  "CommandLine": "schtasks.exe /create /sc minute /mo 5 /tn Sync /tr \"powershell.exe -w hidden -File C:\\ProgramData\\s.ps1\""
+}

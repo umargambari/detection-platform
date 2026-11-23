@@ -1,0 +1,4 @@
+{
+  "Image": "C:\\Windows\\System32\\schtasks.exe",
+  "CommandLine": "schtasks.exe /create /tn GoogleUpdateTaskMachineUA /tr \"C:\\Users\\bob\\AppData\\Local\\Google\\Update\\GoogleUpdate.exe /ua\" /sc hourly"
+}
