@@ -1,0 +1,32 @@
+title: Process Memory Dump via Comsvcs.dll
+id: 30282246-6f75-43a1-b766-399263202184
+status: experimental
+description: >
+  Detects rundll32 calling MiniDump in comsvcs.dll, by name or by ordinal
+  #24. This is a living-off-the-land way to dump LSASS memory and harvest
+  credentials without dropping a tool.
+references:
+  - https://attack.mitre.org/techniques/T1003/001/
+author: Umar Gambari
+date: 2026-11-23
+tags:
+  - attack.credential-access
+  - attack.t1003.001
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_image:
+    Image|endswith: '\rundll32.exe'
+  selection_cli_minidump:
+    CommandLine|contains|all:
+      - 'comsvcs'
+      - 'minidump'
+  selection_cli_ordinal:
+    CommandLine|contains|all:
+      - 'comsvcs'
+      - '#24'
+  condition: selection_image and 1 of selection_cli_*
+falsepositives:
+  - Rare. Some crash-dump or diagnostic tooling may call comsvcs.dll MiniDump
+level: high
