@@ -1,0 +1,44 @@
+title: Suspicious Scheduled Task Creation via Schtasks
+id: 5febdcae-d573-47a1-8337-a55f9eb19085
+status: experimental
+description: >
+  Detects schtasks creating a task that runs from a user-writable location or
+  launches a script host, a common persistence technique. Known software
+  updaters are filtered out.
+references:
+  - https://attack.mitre.org/techniques/T1053/005/
+author: Umar Gambari
+date: 2026-11-23
+tags:
+  - attack.persistence
+  - attack.execution
+  - attack.t1053.005
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_image:
+    Image|endswith: '\schtasks.exe'
+  selection_create:
+    CommandLine|contains:
+      - ' /create '
+      - ' -create '
+  selection_suspicious:
+    CommandLine|contains:
+      - '\appdata\'
+      - '\temp\'
+      - '\users\public\'
+      - '\programdata\'
+      - 'powershell'
+      - 'wscript'
+      - 'mshta'
+      - 'rundll32'
+      - 'regsvr32'
+  filter_known_updaters:
+    CommandLine|contains:
+      - 'googleupdate'
+      - 'microsoftedgeupdate'
+  condition: selection_image and selection_create and selection_suspicious and not filter_known_updaters
+falsepositives:
+  - Installers and updaters that register tasks from user-profile folders. Add them to filter_known_updaters after review
+level: medium
