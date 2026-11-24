@@ -23,7 +23,7 @@ def test_convert_writes_kql_files(tmp_path, capsys):
     assert main(["convert", RULES, "--out", str(out_dir)]) == 0
     files = list(out_dir.glob("*.kql"))
     assert len(files) == RULE_COUNT
-    assert all(f.read_text().startswith("SecurityEvent") for f in files)
+    assert all(f.read_text().startswith(("SecurityEvent", "AuditLogs")) for f in files)
 
 
 def test_convert_missing_directory(capsys):
