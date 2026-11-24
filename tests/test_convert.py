@@ -46,3 +46,13 @@ def test_all_repo_rules_convert(target):
     results = convert_paths(RULES, target)
     assert results
     assert all(r.error is None for r in results), [r.error for r in results if r.error]
+
+
+CLOUD_RULE = RULES / "azure" / "azure_auditlogs_credential_added_to_app.yml"
+
+
+@pytest.mark.parametrize("target", sorted(TARGETS))
+def test_cloud_rule_always_targets_its_log_analytics_table(target):
+    query = convert_rule(CLOUD_RULE, target)
+    assert query.startswith("AuditLogs")
+    assert "Add service principal credentials" in query

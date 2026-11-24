@@ -10,12 +10,21 @@ import yaml
 from sigma.backends.kusto import KustoBackend
 from sigma.collection import SigmaCollection
 from sigma.exceptions import SigmaError
+from sigma.pipelines.azuremonitor import azure_monitor_pipeline
 
 # target name -> (pipeline module, pipeline factory function)
 TARGETS = {
     "xdr": ("microsoftxdr", "microsoft_xdr_pipeline"),
     "asim": ("sentinelasim", "sentinel_asim_pipeline"),
     "azuremonitor": ("azuremonitor", "azure_monitor_pipeline"),
+}
+
+
+# Cloud log sources have a single home in Log Analytics, whatever --target says:
+# the endpoint dialects (xdr, asim) do not apply to them.
+CLOUD_TABLES = {
+    ("azure", "auditlogs"): "AuditLogs",
+    ("azure", "signinlogs"): "SigninLogs",
 }
 
 
@@ -39,6 +48,17 @@ def _pipeline(target: str):
     return getattr(importlib.import_module(f"sigma.pipelines.{module}"), factory)()
 
 
+def _cloud_table(collection: SigmaCollection) -> str | None:
+    for rule in collection.rules:
+        logsource = getattr(rule, "logsource", None)
+        if logsource is None:
+            continue
+        key = ((logsource.product or "").lower(), (logsource.service or "").lower())
+        if key in CLOUD_TABLES:
+            return CLOUD_TABLES[key]
+    return None
+
+
 def convert_rule(path: Path, target: str) -> str:
     """Convert one Sigma rule file to a KQL query for the given target."""
     pipeline = _pipeline(target)
@@ -47,6 +67,9 @@ def convert_rule(path: Path, target: str) -> str:
         # place, so reusing one rule across targets hands the second pipeline
         # fields the first one already renamed.
         collection = SigmaCollection.from_yaml(Path(path).read_text(encoding="utf-8"))
+        table = _cloud_table(collection)
+        if table:
+            pipeline = azure_monitor_pipeline(query_table=table)
         queries = KustoBackend(pipeline).convert(collection)
     except (SigmaError, yaml.YAMLError, OSError) as exc:
         raise ConversionError(str(exc)) from exc
