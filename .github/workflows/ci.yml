@@ -33,3 +33,5 @@ jobs:
 
       - name: Convert rules to KQL
         run: detectctl convert rules --target azuremonitor --out build/kql
+      - name: Render Sentinel analytics rules
+        run: detectctl render rules/azure --out build/sentinel/analytics.json
