@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 
 from . import __version__
 from .convert import TARGETS, convert_paths
 from .lint import lint_paths
+from .render import RenderError, render_template
 from .ruletest import run_rule_tests
 
 
@@ -35,6 +37,15 @@ def build_parser() -> argparse.ArgumentParser:
                          help="query dialect (default: azuremonitor)")
     convert.add_argument("--out", type=Path,
                          help="write one .kql file per rule into this directory (default: print)")
+    render = sub.add_parser("render", help="render rules as Sentinel analytics rules (ARM template)")
+    render.add_argument("path", nargs="?", default="rules", type=Path,
+                        help="rules directory (default: rules)")
+    render.add_argument("--out", type=Path,
+                        help="write the ARM template to this file (default: print)")
+    render.add_argument("--frequency", default="PT5M",
+                        help="how often each rule runs, ISO 8601 (default: PT5M)")
+    render.add_argument("--period", default="PT1H",
+                        help="lookback window of each run, ISO 8601 (default: PT1H)")
     return parser
 
 
@@ -97,6 +108,28 @@ def _cmd_convert(args: argparse.Namespace) -> int:
     return 1 if failed else 0
 
 
+def _cmd_render(args: argparse.Namespace) -> int:
+    if not args.path.is_dir():
+        print(f"error: {args.path} is not a directory")
+        return 2
+    if not any(args.path.rglob("*.yml")):
+        print(f"error: no rules found in {args.path}")
+        return 2
+    try:
+        template = render_template(args.path, frequency=args.frequency, period=args.period)
+    except RenderError as exc:
+        print(f"FAIL  {exc}")
+        return 1
+    text = json.dumps(template, indent=2, ensure_ascii=False) + "\n"
+    if args.out:
+        args.out.parent.mkdir(parents=True, exist_ok=True)
+        args.out.write_text(text, encoding="utf-8")
+        print(f"{len(template['resources'])} rule(s) rendered -> {args.out}")
+    else:
+        print(text, end="")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.command == "lint":
@@ -105,4 +138,6 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_test(args)
     if args.command == "convert":
         return _cmd_convert(args)
+    if args.command == "render":
+        return _cmd_render(args)
     return 2
