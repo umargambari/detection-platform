@@ -111,6 +111,7 @@ def render_rule(
             "queryPeriod": period,
             "triggerOperator": "GreaterThan",
             "triggerThreshold": 0,
+            "incidentConfiguration": {"createIncident": True},
             "suppressionEnabled": True,
             "suppressionDuration": suppression,
             "tactics": tactics,
