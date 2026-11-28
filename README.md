@@ -101,6 +101,8 @@ The first version of the rule matched Entra's operation name exactly, and every 
 - **Explicit incident setting.** `createIncident` is declared in the template instead of relying on Azure's default.
 - **Cost guardrails:** a daily ingestion cap on the workspace and a teardown script (`scripts/teardown.sh`) that removes the resource group.
 
+See the [architecture decisions](docs/adr) and the [threat model](docs/threat-model.md) for the reasoning behind these choices.
+
 ## Use it
 
 ```bash
