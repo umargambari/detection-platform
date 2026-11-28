@@ -113,7 +113,9 @@ def test_tactics_use_sentinel_names_and_techniques_are_deduplicated(tmp_path):
 def test_template_wraps_rules_under_a_workspace_parameter():
     template = render_template(AZURE_RULES)
     assert template["parameters"]["workspaceName"]["type"] == "string"
-    assert [r["name"] for r in template["resources"]] == [ENTRA_ID]
+    names = [r["name"] for r in template["resources"]]
+    assert ENTRA_ID in names
+    assert len(names) == len(list(AZURE_RULES.rglob("*.yml")))
     scope = template["resources"][0]["scope"]
     assert scope.startswith("[format('Microsoft.OperationalInsights/workspaces/")
 
