@@ -70,4 +70,14 @@ def run_rule_tests(rules_dir: Path, fixtures_dir: Path) -> list[CaseResult]:
         for fixture in negatives:
             results.append(_run_case(rule_path, rule, fixture, expected=False))
 
+    known = {path.stem for path in _rule_files(rules_dir)}
+    if known and fixtures_dir.is_dir():
+        for folder in sorted(p for p in fixtures_dir.iterdir() if p.is_dir()):
+            if folder.name.startswith((".", "_")) or folder.name in known:
+                continue
+            results.append(CaseResult(
+                folder, "(orphan fixtures)", False,
+                "fixtures folder has no matching rule file",
+            ))
+
     return results
