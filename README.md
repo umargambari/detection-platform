@@ -42,6 +42,36 @@ Event to alert took about 8.5 minutes. Most of that is Entra's export delay into
 | Rendering shipped through a PR | [PR #12, merged](docs/images/04-pr-render-merged.png) |
 | Pipeline deploys with OIDC, no stored secret | [Deploy run](docs/images/06-deploy-oidc-green.png) |
 
+## Evidence
+
+**1. The attack shows up in Entra's audit log** (a client secret added to an app registration)
+
+![Entra audit log](docs/images/01-entra-audit-event.png)
+
+**2. The detection is deployed from code and enabled in Sentinel**
+
+![Rule enabled in Sentinel](docs/images/02-sentinel-rule-enabled.png)
+
+**3. The alert fires**
+
+![Alert fired](docs/images/03-sentinel-alert-fired.png)
+
+**4. Sentinel opens an incident for it**
+
+![Incident created](docs/images/05-sentinel-incident-created.png)
+
+**5. The CI gate blocks a deliberately broken rule**
+
+![CI gate blocking a merge](docs/images/ci-gate-blocked.png)
+
+**6. The renderer shipped through a pull request**
+
+![PR #12 merged](docs/images/04-pr-render-merged.png)
+
+**7. The pipeline deploys with OIDC, no stored secret**
+
+![Deploy run](docs/images/06-deploy-oidc-green.png)
+
 ## A bug that only real data found
 
 The first version of the rule matched Entra's operation name exactly, and every test passed. Against live logs it never fired. Narrowing the query step by step and dumping the characters of the real value showed that Entra writes `Update application – Certificates and secrets management` with a **trailing space**. I reproduced it first as a failing fixture copied from the real log value, then switched the rule to `OperationName|startswith`. Lesson: fixtures drawn from real events catch what hand-written ones can't.
