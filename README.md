@@ -35,6 +35,15 @@ Tested end to end on a real Azure lab tenant.
 
 Event to alert took about 8.5 minutes. Most of that is Entra's export delay into Log Analytics plus the rule's 5-minute schedule, not the rule logic.
 
+A second rule, a member added to an Entra directory role (T1098.003), went through the same pipeline and was triggered for real by assigning a low-risk role to a test user:
+
+| Step | Time (UTC) | Evidence |
+|---|---|---|
+| Role assigned (the attack) | 12:07:01 | [Entra audit log](docs/images/08-entra-role-add-event.png) |
+| Sentinel alert raised | 12:16:30 | [Alert](docs/images/07-sentinel-role-alert.png) |
+
+Event to alert: 9 minutes 29 seconds.
+
 | Control | Evidence |
 |---|---|
 | Rule deployed from code | [Rule enabled in Sentinel](docs/images/02-sentinel-rule-enabled.png) |
@@ -72,6 +81,14 @@ Event to alert took about 8.5 minutes. Most of that is Entra's export delay into
 
 ![Deploy run](docs/images/06-deploy-oidc-green.png)
 
+**8. A second rule: the role assignment shows up in Entra's audit log**
+
+![Entra role assignment](docs/images/08-entra-role-add-event.png)
+
+**9. ...and raises an alert in Sentinel**
+
+![Role assignment alert](docs/images/07-sentinel-role-alert.png)
+
 ## A bug that only real data found
 
 The first version of the rule matched Entra's operation name exactly, and every test passed. Against live logs it never fired. Narrowing the query step by step and dumping the characters of the real value showed that Entra writes `Update application – Certificates and secrets management` with a **trailing space**. I reproduced it first as a failing fixture copied from the real log value, then switched the rule to `OperationName|startswith`. Lesson: fixtures drawn from real events catch what hand-written ones can't.
@@ -108,8 +125,8 @@ pytest -q
 
 ## Limitations and next steps
 
-- One rule is deployed to Sentinel; the three Windows rules need a Windows log source first.
-- More Entra detections (privileged role assignment, new user created).
+- Two rules are deployed to Sentinel; the three Windows rules need a Windows log source first.
+- More Entra detections (new user created, conditional access changes).
 - Logic Apps response playbooks.
 - Drift detection between the repo and what is live in Sentinel.
 
