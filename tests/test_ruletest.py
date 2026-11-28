@@ -114,3 +114,24 @@ def test_cli_test_with_no_rules_is_an_error(tmp_path):
     empty = tmp_path / "empty"
     empty.mkdir()
     assert main(["test", str(empty)]) == 2
+
+
+def _add_orphan(fixtures: Path) -> None:
+    orphan = fixtures / "renamed_rule"
+    orphan.mkdir()
+    (orphan / "match.json").write_text("{}", encoding="utf-8")
+
+
+def test_fixtures_folder_without_a_rule_is_reported(tmp_path):
+    rules, fixtures = make_project(tmp_path, GOOD)
+    _add_orphan(fixtures)
+    bad = failures(run_rule_tests(rules, fixtures))
+    assert len(bad) == 1
+    assert bad[0].rule.name == "renamed_rule"
+    assert "no matching rule" in bad[0].detail
+
+
+def test_cli_exits_1_when_fixtures_have_no_rule(tmp_path):
+    rules, fixtures = make_project(tmp_path, GOOD)
+    _add_orphan(fixtures)
+    assert main(["test", str(rules), "--fixtures", str(fixtures)]) == 1
